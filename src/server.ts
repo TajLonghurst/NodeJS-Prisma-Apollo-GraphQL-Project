@@ -1,31 +1,19 @@
 import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
 import { GraphQLFileLoader } from "@graphql-tools/graphql-file-loader";
-import { loadSchema } from "@graphql-tools/load";
-// import { addResolversToSchema } from "@graphql-tools/schema";
+import { loadSchemaSync } from "@graphql-tools/load";
 import Resolver from "./GraphQL/resolvers";
-import { typeDefs } from "./GraphQL/typeDefs";
 
-// const schema = await loadSchema("graphql/**/*.graphql", {
-//   // load files and merge them into a single schema object
-//   loaders: [new GraphQLFileLoader()],
-// });
-
-// const schemaWithResolvers = addResolversToSchema({
-//   schema,
-//   resolvers: {
-//     Query: {
-//       //  ...
-//     },
-//   },
-// });
+const schema = loadSchemaSync("./**/*.graphql", {
+  loaders: [new GraphQLFileLoader()],
+});
 
 interface MyContext {
   token?: String;
 }
 
 const server = new ApolloServer<MyContext>({
-  typeDefs: typeDefs,
+  typeDefs: schema,
   resolvers: Resolver,
   introspection: true,
 });
@@ -37,5 +25,4 @@ const Server = async () => {
   });
   console.log(`🚀 Server ready ${url}`);
 };
-
 Server();
