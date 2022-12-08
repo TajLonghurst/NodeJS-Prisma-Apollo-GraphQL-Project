@@ -2,12 +2,12 @@
   "name": "nodejs-prisma-apollo-graphql-project",
   "version": "1.0.0",
   "description": "Apollo-GraphQL, Prisma, Postgresql",
-  "main": "index.js",
+  "main": "./server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "ts-node-dev --respawn src/server.ts",
     "build": "tsc",
-    "prismadb": "prisma migrate dev"
+    "prismadb": "prisma migrate dev --name init"
   },
   "repository": {
     "type": "git",
@@ -20,7 +20,6 @@
   },
   "homepage": "https://github.com/TajLonghurst/NodeJS-Prisma-Apollo-GraphQL-Project#readme",
   "devDependencies": {
-    "@types/express": "^4.17.14",
     "@types/node": "^18.11.11",
     "prisma": "^4.7.1",
     "ts-node": "^10.9.1",
@@ -28,7 +27,10 @@
     "typescript": "^4.9.3"
   },
   "dependencies": {
+    "@apollo/server": "^4.2.2",
+    "@graphql-tools/graphql-file-loader": "7.5.13",
+    "@graphql-tools/load": "7.8.8",
     "@prisma/client": "^4.7.1",
-    "express": "^4.18.2"
+    "graphql": "^16.6.0"
   }
 }
