@@ -1,80 +1,197 @@
 import { PrismaClient } from "@prisma/client";
-import { QueryResolvers, Resolvers } from "../../Types/types";
+import { GraphQLError } from "graphql";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import isAuth from "../../Middleware/auth";
 
 const prisma = new PrismaClient();
 
 const userResolvers = {
   Query: {
-    user: async (parent: any, args: any, context: any, info: any) => {
-      try {
-        const { id } = args;
-        const user = await prisma.user.findUnique({
-          where: { id: id },
+    users: async (parent: any, args: any, context: any, info: any) => {
+      const users = await prisma.user.findMany();
+
+      console.log(users);
+      if (users.length < 0) {
+        throw new GraphQLError("Failed to find users in database", {
+          extensions: {
+            code: "USERS_NOT_FOUND",
+            http: {
+              status: 404,
+            },
+          },
         });
-        if (!user) {
-          return console.log("user Could not find user");
-        }
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          password: user.password,
-          createdAt: user.createdAt.toISOString(),
-          updatedAt: user.updatedAt.toISOString(),
-        };
-      } catch (err) {
-        console.log("user Failed", err);
       }
+
+      return users;
     },
-    login: async (parent: any, args: any, context: any, info: any) => {},
+
+    user: async (parent: any, args: any, { req }: any, info: any) => {
+      const decoded = isAuth(req);
+
+      if (!decoded) {
+        throw new GraphQLError("User is not Authenticated", {
+          extensions: {
+            code: "UNAUTHENTICATED)",
+            http: {
+              status: 401,
+            },
+          },
+        });
+      }
+
+      const { id } = args;
+
+      const user = await prisma.user.findUnique({
+        where: { id: id },
+      });
+
+      if (!user) {
+        throw new GraphQLError("Failed to find user in database", {
+          extensions: {
+            code: "USER_NOT_FOUND",
+            http: {
+              status: 404,
+            },
+          },
+        });
+      }
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        password: user.password,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
+      };
+    },
+    login: async (parent: any, args: any, context: any, info: any) => {
+      const { email, password } = args;
+
+      const user = await prisma.user.findMany({
+        where: { email: email },
+      });
+
+      if (user.length < 0) {
+        throw new GraphQLError("Failed to find user Login in database", {
+          extensions: {
+            code: "USER_NOT_FOUND",
+            http: {
+              status: 404,
+            },
+          },
+        });
+      }
+
+      const isEqual = await bcrypt.compare(password, user[0].password);
+
+      if (!isEqual) {
+        throw new GraphQLError("Incorrect password ", {
+          extensions: {
+            code: "BAD_USER_INPUT",
+            http: {
+              status: 403,
+            },
+          },
+        });
+      }
+
+      const token = jwt.sign(
+        {
+          userId: user[0].id,
+          email: user[0].email,
+        },
+        `${process.env.JWT_SECRET}`,
+        {
+          expiresIn: "1h",
+        }
+      );
+
+      return {
+        token: token,
+        userId: user[0].id,
+      };
+    },
   },
   Mutation: {
     deleteUser: async (parent: any, args: any, context: any, info: any) => {
-      try {
-        const { id } = args;
-        const user = await prisma.user.delete({
-          where: { id: id },
-        });
-        if (!user) {
-          return console.log("failed to delete user");
-        }
-        return {
-          message: "Succfully deleted user",
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            password: user.password,
-            createdAt: user.createdAt.toISOString(),
-            updatedAt: user.updatedAt.toISOString(),
-          },
-        };
-      } catch (err) {}
-    },
-    createUser: async (parent: any, args: any, context: any, info: any) => {
-      try {
-        const { name, email, password } = args.userInput;
-        const user = await prisma.user.create({
-          data: {
-            name: name,
-            email: email,
-            password: password,
+      const { id } = args;
+      const user = await prisma.user.delete({
+        where: { id: id },
+      });
+
+      if (!user) {
+        throw new GraphQLError("Failed to delete user in database", {
+          extensions: {
+            code: "USER_NOT_FOUND",
+            http: {
+              status: 404,
+            },
           },
         });
-        if (!user) {
-          return console.log("Could not create users");
-        }
-        return {
+      }
+      return {
+        message: "Succfully deleted user",
+        user: {
           id: user.id,
           name: user.name,
           email: user.email,
           password: user.password,
           createdAt: user.createdAt.toISOString(),
           updatedAt: user.updatedAt.toISOString(),
-        };
-      } catch (err) {
-        console.log("CreateUser Failed", err);
+        },
+      };
+    },
+    createUser: async (parent: any, args: any, context: any, info: any) => {
+      const { name, email, password } = args.userInput;
+
+      const isEmail = await prisma.user.findMany({
+        where: { email: email },
+      });
+
+      console.log(isEmail);
+
+      if (isEmail.length > 0) {
+        throw new GraphQLError("Email already exsits", {
+          extensions: {
+            code: "OPERATION_RESOLUTION_FAILURE",
+            http: {
+              status: 409,
+            },
+          },
+        });
       }
+
+      const hashPassword = await bcrypt.hash(password, 12);
+
+      const user = await prisma.user.create({
+        data: {
+          name: name,
+          email: email,
+          password: hashPassword,
+        },
+      });
+
+      if (!user) {
+        throw new GraphQLError("Failed to create user in database", {
+          extensions: {
+            code: "INTERNAL_SERVER_ERROR",
+            http: {
+              status: 404,
+            },
+          },
+        });
+      }
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        password: user.password,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
+      };
     },
   },
 };

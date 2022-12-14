@@ -9,7 +9,7 @@ const typeDefs = loadSchemaSync("./src/**/*.graphql", {
 });
 
 interface MyContext {
-  token?: String;
+  req?: String;
 }
 
 const server = new ApolloServer<MyContext>({
@@ -21,7 +21,7 @@ const server = new ApolloServer<MyContext>({
 const Server = async () => {
   const { url } = await startStandaloneServer(server, {
     listen: { port: 5000 },
-    context: async ({ req }) => ({ token: req.headers.token }),
+    context: async ({ req }) => ({ req }),
   });
   console.log(`🚀 Server ready ${url}`);
 };

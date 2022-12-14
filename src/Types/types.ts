@@ -20,12 +20,17 @@ export type Auth = {
   userId: Scalars['String'];
 };
 
+export type DeletedUser = {
+  __typename?: 'DeletedUser';
+  message: Scalars['String'];
+  user: User;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   createPost: Post;
   createUser: User;
-  deleteUser: User;
-  signUp: User;
+  deleteUser: DeletedUser;
   updatedPost: Post;
 };
 
@@ -42,11 +47,6 @@ export type MutationCreateUserArgs = {
 
 export type MutationDeleteUserArgs = {
   id: Scalars['ID'];
-};
-
-
-export type MutationSignUpArgs = {
-  userInput: UserInputData;
 };
 
 
@@ -70,6 +70,7 @@ export type Query = {
   login: Auth;
   posts: Array<Post>;
   user: User;
+  users: Array<User>;
 };
 
 
@@ -177,6 +178,7 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 export type ResolversTypes = {
   Auth: ResolverTypeWrapper<Auth>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
+  DeletedUser: ResolverTypeWrapper<DeletedUser>;
   ID: ResolverTypeWrapper<Scalars['ID']>;
   Mutation: ResolverTypeWrapper<{}>;
   Post: ResolverTypeWrapper<Post>;
@@ -191,6 +193,7 @@ export type ResolversTypes = {
 export type ResolversParentTypes = {
   Auth: Auth;
   Boolean: Scalars['Boolean'];
+  DeletedUser: DeletedUser;
   ID: Scalars['ID'];
   Mutation: {};
   Post: Post;
@@ -207,11 +210,16 @@ export type AuthResolvers<ContextType = any, ParentType extends ResolversParentT
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type DeletedUserResolvers<ContextType = any, ParentType extends ResolversParentTypes['DeletedUser'] = ResolversParentTypes['DeletedUser']> = {
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type MutationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   createPost?: Resolver<ResolversTypes['Post'], ParentType, ContextType, Partial<MutationCreatePostArgs>>;
   createUser?: Resolver<ResolversTypes['User'], ParentType, ContextType, Partial<MutationCreateUserArgs>>;
-  deleteUser?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<MutationDeleteUserArgs, 'id'>>;
-  signUp?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<MutationSignUpArgs, 'userInput'>>;
+  deleteUser?: Resolver<ResolversTypes['DeletedUser'], ParentType, ContextType, RequireFields<MutationDeleteUserArgs, 'id'>>;
   updatedPost?: Resolver<ResolversTypes['Post'], ParentType, ContextType, Partial<MutationUpdatedPostArgs>>;
 };
 
@@ -230,6 +238,7 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
   login?: Resolver<ResolversTypes['Auth'], ParentType, ContextType, RequireFields<QueryLoginArgs, 'email' | 'password'>>;
   posts?: Resolver<Array<ResolversTypes['Post']>, ParentType, ContextType>;
   user?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<QueryUserArgs, 'id'>>;
+  users?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
 };
 
 export type UserResolvers<ContextType = any, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
@@ -245,6 +254,7 @@ export type UserResolvers<ContextType = any, ParentType extends ResolversParentT
 
 export type Resolvers<ContextType = any> = {
   Auth?: AuthResolvers<ContextType>;
+  DeletedUser?: DeletedUserResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Post?: PostResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
