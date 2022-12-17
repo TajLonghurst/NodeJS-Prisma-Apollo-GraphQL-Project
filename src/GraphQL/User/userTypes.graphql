@@ -5,7 +5,7 @@ type User {
   password: String!
   createdAt: String!
   updatedAt: String!
-  post: [Post!]!
+  posts: [Post!]!
 }
 
 type DeletedUser {

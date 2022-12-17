@@ -3,15 +3,19 @@ import { GraphQLError } from "graphql";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import isAuth from "../../Middleware/auth";
+import { UserInputData, ResolversParentTypes, AuthResolvers } from "../../Types/types";
 
 const prisma = new PrismaClient();
 
 const userResolvers = {
   Query: {
-    users: async (parent: any, args: any, context: any, info: any) => {
-      const users = await prisma.user.findMany();
+    users: async (parent: any, args: any, context: AuthResolvers, info: any) => {
+      const users = await prisma.user.findMany({
+        include: {
+          posts: true,
+        },
+      });
 
-      console.log(users);
       if (users.length < 0) {
         throw new GraphQLError("Failed to find users in database", {
           extensions: {
@@ -44,6 +48,9 @@ const userResolvers = {
 
       const user = await prisma.user.findUnique({
         where: { id: id },
+        include: {
+          posts: true,
+        },
       });
 
       if (!user) {
@@ -58,10 +65,7 @@ const userResolvers = {
       }
 
       return {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        password: user.password,
+        ...user,
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString(),
       };
@@ -117,6 +121,20 @@ const userResolvers = {
   Mutation: {
     deleteUser: async (parent: any, args: any, context: any, info: any) => {
       const { id } = args;
+
+      const decoded = isAuth(context.req);
+
+      if (!decoded) {
+        throw new GraphQLError("User is not Authenticated", {
+          extensions: {
+            code: "UNAUTHENTICATED)",
+            http: {
+              status: 401,
+            },
+          },
+        });
+      }
+
       const user = await prisma.user.delete({
         where: { id: id },
       });
@@ -134,10 +152,7 @@ const userResolvers = {
       return {
         message: "Succfully deleted user",
         user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          password: user.password,
+          ...user,
           createdAt: user.createdAt.toISOString(),
           updatedAt: user.updatedAt.toISOString(),
         },
@@ -149,8 +164,6 @@ const userResolvers = {
       const isEmail = await prisma.user.findMany({
         where: { email: email },
       });
-
-      console.log(isEmail);
 
       if (isEmail.length > 0) {
         throw new GraphQLError("Email already exsits", {
@@ -185,10 +198,7 @@ const userResolvers = {
       }
 
       return {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        password: user.password,
+        ...user,
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString(),
       };

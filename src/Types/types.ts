@@ -30,8 +30,9 @@ export type Mutation = {
   __typename?: 'Mutation';
   createPost: Post;
   createUser: User;
+  deletePost: Post;
   deleteUser: DeletedUser;
-  updatedPost: Post;
+  updatePost: Post;
 };
 
 
@@ -45,20 +46,25 @@ export type MutationCreateUserArgs = {
 };
 
 
+export type MutationDeletePostArgs = {
+  id: Scalars['ID'];
+};
+
+
 export type MutationDeleteUserArgs = {
   id: Scalars['ID'];
 };
 
 
-export type MutationUpdatedPostArgs = {
-  postInput?: InputMaybe<PostInputData>;
+export type MutationUpdatePostArgs = {
+  postInput?: InputMaybe<PostUpdateInputData>;
 };
 
 export type Post = {
   __typename?: 'Post';
   content: Scalars['String'];
   createdAt: Scalars['String'];
-  creator: Array<User>;
+  creator: User;
   id: Scalars['ID'];
   title: Scalars['String'];
   updatedAt: Scalars['String'];
@@ -91,7 +97,7 @@ export type User = {
   id: Scalars['ID'];
   name: Scalars['String'];
   password: Scalars['String'];
-  post: Array<Post>;
+  posts: Array<Post>;
   updatedAt: Scalars['String'];
 };
 
@@ -103,7 +109,12 @@ export type UserInputData = {
 
 export type PostInputData = {
   content: Scalars['String'];
-  id: Scalars['ID'];
+  title: Scalars['String'];
+};
+
+export type PostUpdateInputData = {
+  content: Scalars['String'];
+  postId: Scalars['ID'];
   title: Scalars['String'];
 };
 
@@ -187,6 +198,7 @@ export type ResolversTypes = {
   User: ResolverTypeWrapper<User>;
   UserInputData: UserInputData;
   postInputData: PostInputData;
+  postUpdateInputData: PostUpdateInputData;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -202,6 +214,7 @@ export type ResolversParentTypes = {
   User: User;
   UserInputData: UserInputData;
   postInputData: PostInputData;
+  postUpdateInputData: PostUpdateInputData;
 };
 
 export type AuthResolvers<ContextType = any, ParentType extends ResolversParentTypes['Auth'] = ResolversParentTypes['Auth']> = {
@@ -219,14 +232,15 @@ export type DeletedUserResolvers<ContextType = any, ParentType extends Resolvers
 export type MutationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   createPost?: Resolver<ResolversTypes['Post'], ParentType, ContextType, Partial<MutationCreatePostArgs>>;
   createUser?: Resolver<ResolversTypes['User'], ParentType, ContextType, Partial<MutationCreateUserArgs>>;
+  deletePost?: Resolver<ResolversTypes['Post'], ParentType, ContextType, RequireFields<MutationDeletePostArgs, 'id'>>;
   deleteUser?: Resolver<ResolversTypes['DeletedUser'], ParentType, ContextType, RequireFields<MutationDeleteUserArgs, 'id'>>;
-  updatedPost?: Resolver<ResolversTypes['Post'], ParentType, ContextType, Partial<MutationUpdatedPostArgs>>;
+  updatePost?: Resolver<ResolversTypes['Post'], ParentType, ContextType, Partial<MutationUpdatePostArgs>>;
 };
 
 export type PostResolvers<ContextType = any, ParentType extends ResolversParentTypes['Post'] = ResolversParentTypes['Post']> = {
   content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  creator?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
+  creator?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -247,7 +261,7 @@ export type UserResolvers<ContextType = any, ParentType extends ResolversParentT
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   password?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  post?: Resolver<Array<ResolversTypes['Post']>, ParentType, ContextType>;
+  posts?: Resolver<Array<ResolversTypes['Post']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
