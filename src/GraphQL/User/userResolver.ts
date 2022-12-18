@@ -3,13 +3,13 @@ import { GraphQLError } from "graphql";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import isAuth from "../../Middleware/auth";
-import { UserInputData, ResolversParentTypes, AuthResolvers } from "../../Types/types";
+import { QueryLoginArgs, QueryUserArgs, UserInputData } from "../../Types/types";
 
 const prisma = new PrismaClient();
 
 const userResolvers = {
   Query: {
-    users: async (parent: any, args: any, context: AuthResolvers, info: any) => {
+    users: async (parent: any, args: any, context: any, info: any) => {
       const users = await prisma.user.findMany({
         include: {
           posts: true,
@@ -30,7 +30,7 @@ const userResolvers = {
       return users;
     },
 
-    user: async (parent: any, args: any, { req }: any, info: any) => {
+    user: async (parent: any, args: QueryUserArgs, { req }: any, info: any) => {
       const decoded = isAuth(req);
 
       if (!decoded) {
@@ -70,7 +70,7 @@ const userResolvers = {
         updatedAt: user.updatedAt.toISOString(),
       };
     },
-    login: async (parent: any, args: any, context: any, info: any) => {
+    login: async (parent: any, args: QueryLoginArgs, context: any, info: any) => {
       const { email, password } = args;
 
       const user = await prisma.user.findMany({
@@ -119,7 +119,7 @@ const userResolvers = {
     },
   },
   Mutation: {
-    deleteUser: async (parent: any, args: any, context: any, info: any) => {
+    deleteUser: async (parent: any, args: { id: string }, context: any, info: any) => {
       const { id } = args;
 
       const decoded = isAuth(context.req);
@@ -158,8 +158,10 @@ const userResolvers = {
         },
       };
     },
-    createUser: async (parent: any, args: any, context: any, info: any) => {
-      const { name, email, password } = args.userInput;
+    createUser: async (parent: any, args: UserInputData, context: any, info: any) => {
+      const name = args.name;
+      const email = args.email;
+      const password = args.password;
 
       const isEmail = await prisma.user.findMany({
         where: { email: email },

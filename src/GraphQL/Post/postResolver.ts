@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { GraphQLError } from "graphql";
 import { GraphQLArgs } from "graphql";
 import isAuth from "../../Middleware/auth";
+import { PostUpdateInputData } from "../../Types/types";
 
 const prisma = new PrismaClient();
 
@@ -70,10 +71,11 @@ const postResolvers = {
         updatedAt: createPost.updatedAt.toISOString(),
       };
     },
-    updatePost: async (parent: any, args: any, context: any, info: any) => {
+    updatePost: async (parent: any, args: PostUpdateInputData, context: any, info: any) => {
       await isAuth(context.req);
-
-      const { title, content, postId } = args.postInput;
+      const title = args.title;
+      const content = args.content;
+      const postId = args.postId;
 
       const postUpdated = await prisma.post.update({
         where: { id: postId },
@@ -100,7 +102,7 @@ const postResolvers = {
         updatedAt: postUpdated.updatedAt.toISOString(),
       };
     },
-    deletePost: async (parent: any, args: any, context: any, info: any) => {
+    deletePost: async (parent: any, args: { id: string }, context: any, info: any) => {
       const { id } = args;
 
       const deltedPost = await prisma.post.delete({ where: { id: id } });
